@@ -30,6 +30,12 @@ class Command(NoArgsCommand):
         super(Command, self).__init__(*args, **kwargs)
         self._cache_existing_geo_objects()
 
+    def handle_noargs(self, *args, **options):
+        print 'Starting IP Geobase update...'
+        ip_blocks, self.city_mapping = self._process_cidr()
+        self._process_city_data()
+        self._renew_ipblocks(ip_blocks)
+
     def _cache_existing_geo_objects(self):
         self.countries = {}
         self.cities = {}
@@ -42,13 +48,8 @@ class Command(NoArgsCommand):
         for city in models.IPGeoBase_City.objects.all():
             self.cities[int(city.id)] = int(city.id)
 
-    def handle_noargs(self, *args, **options):
-        print 'Starting IP Geobase update...'
-        ip_blocks, self.city_mapping = self._process_cidr()
-        self._process_city_data()
-        self._renew_ipblocks(ip_blocks)
-
     def _process_cidr(self):
+        ''' Обработка данных по блокам ip-адресов (файл cidr_optim.txt) '''
         cidr_data = self._get_entries_from_zipfile(conf.IPGEOBASE_CIDR_INFO)
         ip_blocks = []
         city_mapping = {'country':{}, 'region':{}}
@@ -61,6 +62,7 @@ class Command(NoArgsCommand):
         return ip_blocks, city_mapping
 
     def _process_city_data(self):
+        ''' Обработка данных по географии (файл cities.txt) '''
         city_data = self._get_entries_from_zipfile(conf.IPGEOBASE_CITIES_INFO)
         for line in city_data:
             row = dict(zip(conf.IPGEOBASE_CITIES_INFO['fields'], line.split("\t")))
@@ -82,6 +84,7 @@ class Command(NoArgsCommand):
         return self.regions[key]
 
     def _get_entries_from_zipfile(self, config):
+        """ Получаем содержимое конкретного файла из архива в виде списка строк """
         zip_file = self._get_remote_file_contents(config['url'])
         content = self._get_unzipped_content(zip_file, config['filename'])
         return [line.strip() for line in content.decode(config['encoding']).split("\n")
@@ -111,6 +114,7 @@ class Command(NoArgsCommand):
 
     @transaction.commit_manually
     def _renew_ipblocks(self, ipblocks):
+        """ Заменяем данные по блокам адресов в БД на новые """
         print 'Updating CIDR...'
         try:
             cursor = connection.cursor()
@@ -145,6 +149,7 @@ class Command(NoArgsCommand):
 
 
     def _get_unzipped_content(self, zip_file, extract_file):
+        """ Получаем содержимое конкретного файла из архива в виде строки """
         zip = ZipFile(zip_file)
         try:
             content = zip.read(extract_file)

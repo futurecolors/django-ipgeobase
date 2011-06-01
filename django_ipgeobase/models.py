@@ -21,7 +21,7 @@ class IPGeoBase_Region(models.Model):
     country = models.ForeignKey(IPGeoBase_Country, verbose_name=_(u'страна'), null=True)
     name = models.CharField(_(u"название региона"), max_length=255)
 
-    def __unicode__(self, ):
+    def __unicode__(self):
         return self.name
 
     class Meta:
@@ -35,7 +35,7 @@ class IPGeoBase_City(models.Model):
     region = models.ForeignKey(IPGeoBase_Region, verbose_name=_(u'регион'))
     name = models.CharField(_(u"название города"), max_length=255)
 
-    def __unicode__(self, ):
+    def __unicode__(self):
         return self.name
 
     class Meta:
