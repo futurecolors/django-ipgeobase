@@ -1,7 +1,8 @@
 #encoding:utf8
+from django.core.urlresolvers import reverse
 from django.db import models
-from django_ipgeobase.managers import IPGeoBaseManager
 from django.utils.translation import ugettext_lazy as _
+from django_ipgeobase.managers import IPGeoBaseManager
 
 
 class IPGeoBase_Country(models.Model):
@@ -17,7 +18,7 @@ class IPGeoBase_Country(models.Model):
 
 
 class IPGeoBase_Region(models.Model):
-    country = models.ForeignKey(IPGeoBase_Country, verbose_name=_(u'страна'))
+    country = models.ForeignKey(IPGeoBase_Country, verbose_name=_(u'страна'), null=True)
     name = models.CharField(_(u"название региона"), max_length=255)
 
     def __unicode__(self, ):
@@ -67,3 +68,7 @@ class IPGeoBase(models.Model):
         return "[%s] %s" % (self.country_id, self.ip_block)
 
     objects = IPGeoBaseManager()
+
+    class Meta:
+        verbose_name = _(u"Блок IP")
+        verbose_name_plural = _(u"Блоки IP")
